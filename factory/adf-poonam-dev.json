@@ -1,0 +1,9 @@
+{
+	"name": "adf-poonam-dev",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "7c0f8552-e1d0-41c3-bb3f-fbb85caa7547",
+		"tenantId": "e4e34038-ea1f-4882-b6e8-ccd776459ca0"
+	}
+}
