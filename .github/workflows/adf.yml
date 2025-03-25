@@ -37,6 +37,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-24.04
+    environment: PROD
     steps:
  
       - name: Download a Build Artifact
@@ -45,11 +46,10 @@ jobs:
           name: ExportedArmTemplate 
  
       - name: Login via Az module
-        uses: azure/login@v1
+        uses: Azure/login@v2.2.0
         with:
-          auth-type: IDENTITY
-          tenant-id: e4e34038-ea1f-4882-b6e8-ccd776459ca0
-          subscription-id: 7133afd3-c71c-4f13-9320-ab6f3543c8c2
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
 
 
       - name: Run PreDeploymentScript
