@@ -58,8 +58,8 @@ jobs:
           sudo pwsh -Command ./PrePostDeploymentScript.ps1 `
             -armTemplate "./ARMTemplateForFactory.json" `
             -armTemplateParameters "./ARMTemplateParametersForFactory.json" `
-            -ResourceGroupName "rg-udp-datawarehouse-prod-sea-001" `
-            -DataFactoryName "adf-udp-datawarehouse-wcm-prod-sea-001" `
+            -ResourceGroupName "Rg-poonam-adf" `
+            -DataFactoryName "adf-poonam-prod" `
             -predeployment 1 `
             -deleteDeployment 0
  
