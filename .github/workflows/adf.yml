@@ -1,0 +1,80 @@
+name: Deliver to development environment
+ 
+on:
+  workflow_dispatch:
+
+  
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+ 
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.4.1
+      with:
+        node-version: 18.x
+    - name: install ADF Utilities package
+      run: npm install
+      working-directory: ${{github.workspace}}  # (1) provide the folder location of the package.json file
+# Validates all of the Data Factory resources in the repository. You'll get the same validation errors as when "Validate All" is selected.
+    - name: Validate
+      run: npm run build validate ${{github.workspace}}/ /subscriptions/de20ab4d-a883-4a74-8fbf-df4b064f86bf/resourceGroups/rg-udp-dwh-cicd-dev-sea-001/providers/Microsoft.DataFactory/factories/adf-udp-cicd-development # (2) The validate command needs the root folder location of your repository where all the objects are stored. And the 2nd parameter is the resourceID of the ADF instance 
+      working-directory: ${{github.workspace}}
+
+ 
+    - name: Validate and Generate ARM template
+      run: npm run build export ${{github.workspace}}/ /subscriptions/de20ab4d-a883-4a74-8fbf-df4b064f86bf/resourceGroups/rg-udp-dwh-cicd-dev-sea-001/providers/Microsoft.DataFactory/factories/adf-udp-cicd-development "ExportedArmTemplate"  # (3) The build command, as validate, needs the root folder location of your repository where all the objects are stored. And the 2nd parameter is the resourceID of the ADF instance. The 3rd parameter is the exported ARM template artifact name 
+      working-directory: ${{github.workspace}}
+# In order to leverage the artifact in another job, we need to upload it with the upload action 
+    - name: upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ExportedArmTemplate # (4) use the same artifact name you used in the previous export step
+        path: ${{github.workspace}}/build/ExportedArmTemplate
+ 
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+ 
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ExportedArmTemplate 
+ 
+      - name: Login via Az module
+        uses: azure/login@v1
+        with:
+          auth-type: IDENTITY
+          tenant-id: ec8335d1-4fa9-43ab-b584-943c4aa97b7f
+          subscription-id: 7133afd3-c71c-4f13-9320-ab6f3543c8c2
+
+
+      - name: Run PreDeploymentScript
+        shell: pwsh
+        run: |
+          sudo pwsh -Command ./PrePostDeploymentScript.ps1 `
+            -armTemplate "./ARMTemplateForFactory.json" `
+            -armTemplateParameters "./ARMTemplateParametersForFactory.json" `
+            -ResourceGroupName "rg-udp-datawarehouse-prod-sea-001" `
+            -DataFactoryName "adf-udp-datawarehouse-wcm-prod-sea-001" `
+            -predeployment 1 `
+            -deleteDeployment 0
+ 
+ 
+      - name: Deploy Azure Resource Manager (ARM) Template
+        uses: Azure/arm-deploy@v1.0.6
+        with:
+          scope: 'resourcegroup'
+          resourceGroupName: 'Rg-poonam-adf'
+          template: ./ARMTemplateForFactory.json
+          deploymentMode: Incremental
+          parameters: > 
+            ./ARMTemplateParametersForFactory.json
+            factoryName=adf-poonam-prod
+ 
+      - name: Run Post-deployment script
+        shell: pwsh
+        run: sudo pwsh -command "./PrePostDeploymentScript.ps1 -armTemplate ./ARMTemplateForFactory.json -armTemplateParameters ./ARMTemplateParametersForFactory.json -ResourceGroupName Rg-poonam-adf -DataFactoryName adf-poonam-prod -predeployment 0 -deleteDeployment 0"
