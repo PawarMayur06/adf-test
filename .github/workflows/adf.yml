@@ -48,7 +48,7 @@ jobs:
         uses: azure/login@v1
         with:
           auth-type: IDENTITY
-          tenant-id: ec8335d1-4fa9-43ab-b584-943c4aa97b7f
+          tenant-id: e4e34038-ea1f-4882-b6e8-ccd776459ca0
           subscription-id: 7133afd3-c71c-4f13-9320-ab6f3543c8c2
 
 
